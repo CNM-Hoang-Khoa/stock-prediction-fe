@@ -6,7 +6,16 @@ function App() {
   return (
     <div className="App">
       <React.StrictMode>
-        <Chart />
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+          }}
+        >
+          <h1>Stock Prediction</h1>
+          <Chart />
+        </div>
       </React.StrictMode>
     </div>
   );

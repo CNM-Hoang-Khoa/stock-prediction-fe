@@ -8,7 +8,8 @@ import Select from "@mui/material/Select";
 import { jsonToArray } from "./utils";
 const PREDICTION_TYPES = {
   XGBoost: "XGBoost",
-  LSTM: "LSTM ",
+  LSTM: "LSTM",
+  RNN: "RNN",
 };
 
 const Chart = () => {
@@ -174,22 +175,23 @@ const Chart = () => {
   };
 
   return (
-    <div style={{ display: "flex", flexDirection: "row-reverse" }}>
-      <FormControl style={{ minWidth: "200px" }}>
-        <InputLabel id="demo-simple-select-label">Prediction Type</InputLabel>
+    <div style={{ display: "flex", flexDirection: "column" }}>
+      <FormControl style={{ minWidth: "200px", margin: "20px 50px" }}>
+        <InputLabel id="demo-simple-select-label">
+          Choose Prediction Type
+        </InputLabel>
         <Select
           labelId="demo-simple-select-label"
           id="demo-simple-select"
           value={predictionType}
-          label="Prediction Type"
+          label="Choose Prediction Type"
           onChange={handleChangePredictionType}
         >
-          <MenuItem value={PREDICTION_TYPES.LSTM}>
-            {PREDICTION_TYPES.LSTM}
-          </MenuItem>
-          <MenuItem value={PREDICTION_TYPES.XGBoost}>
-            {PREDICTION_TYPES.XGBoost}
-          </MenuItem>
+          {Object.keys(PREDICTION_TYPES).map((item) => (
+            <MenuItem value={PREDICTION_TYPES[item]}>
+              {PREDICTION_TYPES[item]}
+            </MenuItem>
+          ))}
         </Select>
       </FormControl>
       <div ref={chartRef} />
