@@ -13,7 +13,9 @@ const PREDICTION_TYPES = {
 };
 
 const Chart = () => {
-  const [predictionType, setPredictionType] = useState(PREDICTION_TYPES.LSTM);
+  const [predictionType, setPredictionType] = useState(
+    PREDICTION_TYPES.XGBoost
+  );
   const [isFirstLoad, setIsFirstLoad] = useState(true);
 
   const chartRef = useRef();
@@ -149,7 +151,9 @@ const Chart = () => {
           time,
           value: candlestick.c,
         });
-        fetch(`http://127.0.0.1:5000/update-predict?type=${predictionType}`)
+        fetch(
+          `http://127.0.0.1:5000/update-predict?type=${predictionType}&time=${time}&value=${candlestick.c}`
+        )
           .then((r) => r.json())
           .then((r) => JSON.parse(r))
           .then((response) => {
@@ -188,7 +192,10 @@ const Chart = () => {
           onChange={handleChangePredictionType}
         >
           {Object.keys(PREDICTION_TYPES).map((item) => (
-            <MenuItem value={PREDICTION_TYPES[item]}>
+            <MenuItem
+              key={PREDICTION_TYPES[item]}
+              value={PREDICTION_TYPES[item]}
+            >
               {PREDICTION_TYPES[item]}
             </MenuItem>
           ))}
