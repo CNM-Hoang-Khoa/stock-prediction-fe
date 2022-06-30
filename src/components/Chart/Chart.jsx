@@ -184,7 +184,7 @@ const Chart = () => {
     binanceSocket.onmessage = (event) => {
       const message = JSON.parse(event.data);
       const candlestick = message.k;
-      const time = message.k.t / 1000;
+      const time = message.k.t / 1000 + 7 * 60 * 60;
 
       if (time !== ts.current && !isFirstLoad) {
         ts.current = time;
