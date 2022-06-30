@@ -176,6 +176,21 @@ const Chart = () => {
     predictROCChart.current.setData(predictROCValue);
   }, [predictCloseValue]);
 
+  const updatePredict = (time, value) => {
+    fetch(
+      `http://127.0.0.1:5000/update-predict?type=${predictionType}&time=${time}&value=${value}`
+    )
+      .then((r) => r.json())
+      .then((response) => {
+        predictCloseChart.current.update(
+          jsonToArray(JSON.parse(response["Close"]))[0]
+        );
+        predictROCChart.current.update(
+          jsonToArray(JSON.parse(response["ROC"]))[0]
+        );
+      });
+  };
+
   useEffect(() => {
     const binanceSocket = new WebSocket(
       "wss://stream.binance.com:9443/ws/btcusdt@kline_3m"
@@ -200,18 +215,7 @@ const Chart = () => {
           time,
           value: candlestick.c,
         });
-        fetch(
-          `http://127.0.0.1:5000/update-predict?type=${predictionType}&time=${time}&value=${candlestick.c}`
-        )
-          .then((r) => r.json())
-          .then((response) => {
-            predictCloseChart.current.update(
-              jsonToArray(JSON.parse(response["Close"]))[0]
-            );
-            predictROCChart.current.update(
-              jsonToArray(JSON.parse(response["ROC"]))[0]
-            );
-          });
+        (() => updatePredict(time, candlestick.c))();
       }
 
       // closeChart.current.update({
