@@ -232,6 +232,7 @@ const Chart = () => {
   const handleChangePredictionType = (e) => {
     setPredictionType(e.target.value);
     predictCloseChart.current.setData([]);
+    rocChart.current.setData([]);
   };
 
   const handleChangePredictionValue = (e) => {
