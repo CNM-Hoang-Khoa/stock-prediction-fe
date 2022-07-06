@@ -8,6 +8,7 @@ import Select from "@mui/material/Select";
 import OutlinedInput from "@mui/material/OutlinedInput";
 import ListItemText from "@mui/material/ListItemText";
 import Checkbox from "@mui/material/Checkbox";
+import FormHelperText from "@mui/material/FormHelperText";
 import { jsonToArray } from "./utils";
 
 const ITEM_HEIGHT = 48;
@@ -28,7 +29,7 @@ const PREDICTION_TYPES = {
 };
 
 const PREDICTION_VALUES = {
-  CLOSE: "Close Value",
+  CLOSE: "Closing Value",
   ROC: "Price change Value",
 };
 
@@ -36,9 +37,9 @@ const Chart = () => {
   const [predictionType, setPredictionType] = useState(
     PREDICTION_TYPES.XGBoost
   );
-  const [predictionValue, setPredictionValue] = useState([]);
+  const [predictionValue, setPredictionValue] = useState(["CLOSE"]);
   const [isFirstLoad, setIsFirstLoad] = useState(true);
-
+  const [isPredicting, setIsPredicting] = useState(false);
   const chartRef = useRef();
   const originalChart = useRef();
   const closeChart = useRef();
@@ -103,18 +104,16 @@ const Chart = () => {
       visible: false,
     });
     closeChart.current = originalChart.current.addAreaSeries({
-      title: "Close Value",
+      title: "Closing Value",
       topColor: "rgba(67, 83, 254, 0.7)",
       bottomColor: "rgba(67, 83, 254, 0.3)",
       lineColor: "rgba(67, 83, 254, 1)",
       lineWidth: 2,
-      visible: false,
     });
 
     predictCloseChart.current = originalChart.current.addLineSeries({
-      title: "Prediction Close Value",
+      title: "Prediction Closing Value",
       color: "green",
-      visible: false,
     });
 
     predictROCChart.current = originalChart.current.addLineSeries({
@@ -131,10 +130,12 @@ const Chart = () => {
           setCloseValueData(response);
         })
         .then(() => {
+          setIsPredicting(true);
           fetch(`http://127.0.0.1:5000/predict?type=${predictionType}`)
             .then((r) => r.json())
             .then((response) => {
               setIsFirstLoad(false);
+              setIsPredicting(false);
               setPredictCloseValue(jsonToArray(JSON.parse(response["Close"])));
               setPredictROCValue(jsonToArray(JSON.parse(response["ROC"])));
             });
@@ -146,14 +147,17 @@ const Chart = () => {
   }, []);
 
   useEffect(() => {
-    !isFirstLoad &&
+    if (!isFirstLoad) {
+      setIsPredicting(true);
       fetch(`http://127.0.0.1:5000/predict?type=${predictionType}`)
         .then((r) => r.json())
         .then((response) => {
           setIsFirstLoad(false);
+          setIsPredicting(false);
           setPredictCloseValue(jsonToArray(JSON.parse(response["Close"])));
           setPredictROCValue(jsonToArray(JSON.parse(response["ROC"])));
         });
+    }
   }, [predictionType]);
 
   useEffect(() => {
@@ -177,11 +181,13 @@ const Chart = () => {
   }, [predictCloseValue]);
 
   const updatePredict = (time, value) => {
+    setIsPredicting(true);
     fetch(
       `http://127.0.0.1:5000/update-predict?type=${predictionType}&time=${time}&value=${value}`
     )
       .then((r) => r.json())
       .then((response) => {
+        setIsPredicting(false);
         predictCloseChart.current.update(
           jsonToArray(JSON.parse(response["Close"]))[0]
         );
@@ -215,6 +221,7 @@ const Chart = () => {
           time,
           value: candlestick.c,
         });
+        setIsPredicting(true);
         (() => updatePredict(time, candlestick.c))();
       }
 
@@ -232,7 +239,7 @@ const Chart = () => {
   const handleChangePredictionType = (e) => {
     setPredictionType(e.target.value);
     predictCloseChart.current.setData([]);
-    rocChart.current.setData([]);
+    predictROCChart.current.setData([]);
   };
 
   const handleChangePredictionValue = (e) => {
@@ -256,7 +263,10 @@ const Chart = () => {
   return (
     <div style={{ display: "flex", flexDirection: "column" }}>
       <div style={{ display: "flex" }}>
-        <FormControl style={{ minWidth: "200px", margin: "20px 50px" }}>
+        <FormControl
+          style={{ minWidth: "200px", margin: "20px 50px" }}
+          disabled={isPredicting}
+        >
           <InputLabel id="demo-simple-select-label">
             Choose Prediction Type
           </InputLabel>
@@ -276,6 +286,9 @@ const Chart = () => {
               </MenuItem>
             ))}
           </Select>
+          {isPredicting && (
+            <FormHelperText>We are predicting, please wait!</FormHelperText>
+          )}
         </FormControl>
         <FormControl style={{ minWidth: "500px", margin: "20px 50px" }}>
           <InputLabel id="demo-multiple-checkbox-label">
@@ -288,7 +301,12 @@ const Chart = () => {
             value={predictionValue}
             onChange={handleChangePredictionValue}
             input={<OutlinedInput label="Choose value to predict" />}
-            renderValue={(selected) => selected.join(", ")}
+            renderValue={(selected) => {
+              const newSelected = selected.map(
+                (item) => PREDICTION_VALUES[item]
+              );
+              return newSelected.join(", ");
+            }}
             MenuProps={MenuProps}
           >
             {Object.keys(PREDICTION_VALUES).map((item) => (
